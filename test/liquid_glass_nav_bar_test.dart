@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_test/flutter_test.dart';
+import 'package:google_fonts/google_fonts.dart';
 import 'package:evoria/core/widgets/liquid_glass_nav_bar.dart';
 import 'package:evoria/core/theme/evoria_theme.dart';
 
 void main() {
+  TestWidgetsFlutterBinding.ensureInitialized();
+  GoogleFonts.config.allowRuntimeFetching = false;
+
   const testItems = [
     LiquidNavItem(icon: Icons.home_rounded, label: 'Beranda'),
     LiquidNavItem(icon: Icons.photo_library_outlined, label: 'Kenangan'),
@@ -30,6 +34,7 @@ void main() {
                   });
                 },
                 items: testItems,
+                forceReducedMotion: true,
               );
             },
           ),
@@ -66,6 +71,7 @@ void main() {
                   });
                 },
                 items: testItems,
+                forceReducedMotion: true,
               );
             },
           ),
@@ -75,13 +81,15 @@ void main() {
 
     // Tap on 'Jelajah' (index 2)
     await tester.tap(find.text('Jelajah'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
     expect(selectedTab, equals(2));
 
     // Tap on 'Profil' (index 4)
     await tester.tap(find.text('Profil'));
-    await tester.pumpAndSettle();
+    await tester.pump();
+    await tester.pump(const Duration(milliseconds: 300));
 
     expect(selectedTab, equals(4));
   });
@@ -97,6 +105,7 @@ void main() {
             onItemSelected: (_) {},
             items: testItems,
             isDark: true,
+            forceReducedMotion: true,
           ),
         ),
       ),
