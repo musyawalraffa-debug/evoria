@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/physics.dart';
 import 'package:flutter/services.dart';
 import '../theme/evoria_colors.dart';
+import '../theme/evoria_shadows.dart';
 
 /// Item definition for the Liquid Glass Navbar.
 class LiquidNavItem {
