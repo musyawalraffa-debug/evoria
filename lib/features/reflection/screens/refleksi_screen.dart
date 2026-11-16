@@ -202,46 +202,140 @@ class _RefleksiScreenState extends State<RefleksiScreen> {
                   const SizedBox(height: 18),
 
                   // Daily Reflection Question Card
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: cardColor,
-                      borderRadius: BorderRadius.circular(22),
-                      boxShadow: isDark
-                          ? EvoriaShadows.softCardDark
-                          : EvoriaShadows.softCardLight,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'PERTANYAAN REFLEKSI HARI INI',
-                          style: EvoriaTypography.uiCaption(
-                            color: isDark
-                                ? EvoriaColors.darkAccent
-                                : EvoriaColors.lightTerracotta,
-                            fontWeight: FontWeight.w700,
+                  GestureDetector(
+                    onTap: () {
+                      final answerCtrl = TextEditingController();
+                      showModalBottomSheet(
+                        context: context,
+                        isScrollControlled: true,
+                        backgroundColor: cardColor,
+                        shape: const RoundedRectangleBorder(
+                          borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+                        ),
+                        builder: (ctx) => Padding(
+                          padding: EdgeInsets.only(
+                            left: 24,
+                            right: 24,
+                            top: 24,
+                            bottom: MediaQuery.of(ctx).viewInsets.bottom + 24,
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Refleksi Berdua',
+                                style: EvoriaTypography.editorialHeadline(
+                                  color: textColor,
+                                  fontSize: 20,
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                '"Hal kecil apa dari pasanganmu hari ini yang diam-diam membuatmu bersyukur?"',
+                                style: TextStyle(
+                                  color: textColor,
+                                  fontSize: 15,
+                                  fontStyle: FontStyle.italic,
+                                ),
+                              ),
+                              const SizedBox(height: 16),
+                              TextField(
+                                controller: answerCtrl,
+                                maxLines: 4,
+                                style: TextStyle(color: textColor, fontSize: 14),
+                                decoration: InputDecoration(
+                                  hintText: 'Tuliskan jawaban dari lubuk hatimu...',
+                                  filled: true,
+                                  border: OutlineInputBorder(
+                                    borderRadius: BorderRadius.circular(16),
+                                    borderSide: BorderSide.none,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(height: 20),
+                              SizedBox(
+                                width: double.infinity,
+                                height: 50,
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    if (answerCtrl.text.trim().isNotEmpty) {
+                                      Navigator.pop(ctx);
+                                      ScaffoldMessenger.of(context).showSnackBar(
+                                        const SnackBar(
+                                          content: Text('Jawaban refleksimu telah tersimpan di suaka ✨'),
+                                          backgroundColor: EvoriaColors.lightTerracotta,
+                                        ),
+                                      );
+                                    }
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: EvoriaColors.lightTerracotta,
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(16),
+                                    ),
+                                  ),
+                                  child: const Text('Simpan Jawaban', style: TextStyle(color: Colors.white)),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          '"Hal kecil apa dari pasanganmu hari ini yang diam-diam membuatmu bersyukur?"',
-                          style: EvoriaTypography.editorialHeadline(
-                            color: textColor,
-                            fontSize: 17,
+                      );
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(20),
+                      decoration: BoxDecoration(
+                        color: cardColor,
+                        borderRadius: BorderRadius.circular(22),
+                        boxShadow: isDark
+                            ? EvoriaShadows.softCardDark
+                            : EvoriaShadows.softCardLight,
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                'PERTANYAAN REFLEKSI HARI INI',
+                                style: EvoriaTypography.uiCaption(
+                                  color: isDark
+                                      ? EvoriaColors.darkAccent
+                                      : EvoriaColors.lightTerracotta,
+                                  fontWeight: FontWeight.w700,
+                                ),
+                              ),
+                              Icon(
+                                Icons.edit_note_rounded,
+                                size: 20,
+                                color: isDark
+                                    ? EvoriaColors.darkAccent
+                                    : EvoriaColors.lightTerracotta,
+                              ),
+                            ],
                           ),
-                        ),
-                        const SizedBox(height: 12),
-                        Text(
-                          'Ketuk untuk menuliskan jawaban berdua...',
-                          style: TextStyle(
-                            fontSize: 12,
-                            fontStyle: FontStyle.italic,
-                            color: mutedColor,
+                          const SizedBox(height: 8),
+                          Text(
+                            '"Hal kecil apa dari pasanganmu hari ini yang diam-diam membuatmu bersyukur?"',
+                            style: EvoriaTypography.editorialHeadline(
+                              color: textColor,
+                              fontSize: 17,
+                            ),
                           ),
-                        ),
-                      ],
+                          const SizedBox(height: 12),
+                          Text(
+                            'Ketuk di sini untuk menuliskan jawabanmu...',
+                            style: TextStyle(
+                              fontSize: 12,
+                              fontStyle: FontStyle.italic,
+                              color: mutedColor,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ),
                   const SizedBox(height: 20),

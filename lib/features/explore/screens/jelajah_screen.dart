@@ -1,31 +1,45 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import '../../../core/models/memory_item.dart';
+import '../../../core/providers/sanctuary_providers.dart';
 import '../../../core/theme/evoria_colors.dart';
 import '../../../core/theme/evoria_typography.dart';
 import '../../../core/theme/evoria_shadows.dart';
 
-class JelajahScreen extends StatefulWidget {
+class JelajahScreen extends ConsumerStatefulWidget {
   const JelajahScreen({super.key});
 
   @override
-  State<JelajahScreen> createState() => _JelajahScreenState();
+  ConsumerState<JelajahScreen> createState() => _JelajahScreenState();
 }
 
-class _JelajahScreenState extends State<JelajahScreen> {
+class _JelajahScreenState extends ConsumerState<JelajahScreen> {
   final TextEditingController _searchController = TextEditingController();
-  bool _hasSearched = false;
+  String _currentQuery = '';
 
   final List<String> _suggestedQueries = [
-    'foto kita waktu sunset di pantai',
-    'senyum manis saat hujan',
-    'kopi berdua di sore hari',
-    'jalan santai di taman',
-    'momen ulang tahun kemarin',
+    'Pantai',
+    'Kopi',
+    'Hujan',
+    'Taman',
+    'Romantis',
+    'Hangat',
+    'Bahagia',
   ];
 
   @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  void _onSearch(String query) {
+    setState(() {
+      _currentQuery = query.trim().toLowerCase();
+    });
   }
 
   @override
@@ -37,6 +51,21 @@ class _JelajahScreenState extends State<JelajahScreen> {
         isDark ? EvoriaColors.darkMuted : EvoriaColors.lightMuted;
     final Color cardColor =
         isDark ? EvoriaColors.darkSurface : EvoriaColors.lightCards;
+
+    final allMemories = ref.watch(memoriesProvider);
+
+    final matchingMemories = _currentQuery.isEmpty
+        ? <MemoryItem>[]
+        : allMemories.where((m) {
+            final t = m.title.toLowerCase();
+            final l = m.location.toLowerCase();
+            final n = m.note.toLowerCase();
+            final mood = m.mood.toLowerCase();
+            return t.contains(_currentQuery) ||
+                l.contains(_currentQuery) ||
+                n.contains(_currentQuery) ||
+                mood.contains(_currentQuery);
+          }).toList();
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -58,19 +87,18 @@ class _JelajahScreenState extends State<JelajahScreen> {
                         fontSize: 24,
                       ),
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: 6),
                     Text(
-                      'Temukan foto dengan deskripsi bahasa alami seperti "waktu sunset di pantai".',
+                      'Temukan kembali serpihan rasa dan tempat kalian berdua.',
                       style: EvoriaTypography.uiBody(
                         color: mutedColor,
-                        fontSize: 13.5,
+                        fontSize: 13,
                       ),
                     ),
-                    const SizedBox(height: 16),
+                    const SizedBox(height: 18),
 
-                    // Natural Language Search Bar
+                    // Search Field
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
                       decoration: BoxDecoration(
                         color: cardColor,
                         borderRadius: BorderRadius.circular(20),
@@ -80,22 +108,15 @@ class _JelajahScreenState extends State<JelajahScreen> {
                       ),
                       child: TextField(
                         controller: _searchController,
-                        style: TextStyle(color: textColor, fontSize: 14.5),
-                        onSubmitted: (value) {
-                          if (value.trim().isNotEmpty) {
-                            setState(() {
-                              _hasSearched = true;
-                            });
-                          }
-                        },
+                        onChanged: _onSearch,
+                        style: TextStyle(color: textColor, fontSize: 14),
                         decoration: InputDecoration(
-                          hintText: 'Cari: foto kita waktu di pantai...',
+                          hintText: 'Cari tempat, suasana, atau momen...',
                           hintStyle: TextStyle(
-                            color: mutedColor.withOpacity(0.7),
-                            fontSize: 14,
+                            color: mutedColor.withOpacity(0.6),
+                            fontSize: 13,
                           ),
-                          border: InputBorder.none,
-                          icon: Icon(
+                          prefixIcon: Icon(
                             Icons.search_rounded,
                             color: isDark
                                 ? EvoriaColors.darkAccent
@@ -103,70 +124,24 @@ class _JelajahScreenState extends State<JelajahScreen> {
                           ),
                           suffixIcon: _searchController.text.isNotEmpty
                               ? IconButton(
-                                  icon: const Icon(Icons.clear_rounded, size: 18),
+                                  icon: const Icon(Icons.close_rounded, size: 18),
                                   onPressed: () {
                                     _searchController.clear();
-                                    setState(() {
-                                      _hasSearched = false;
-                                    });
+                                    _onSearch('');
                                   },
                                 )
                               : null,
+                          border: InputBorder.none,
+                          contentPadding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 14,
+                          ),
                         ),
                       ),
                     ),
-                    const SizedBox(height: 12),
+                    const SizedBox(height: 16),
 
-                    // Privacy & AI Provider Disclosure Badge
-                    Container(
-                      padding: const EdgeInsets.symmetric(
-                        horizontal: 12,
-                        vertical: 8,
-                      ),
-                      decoration: BoxDecoration(
-                        color: (isDark
-                                ? EvoriaColors.darkAccent
-                                : EvoriaColors.lightTerracotta)
-                            .withOpacity(0.08),
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Icons.shield_outlined,
-                            size: 16,
-                            color: isDark
-                                ? EvoriaColors.darkAccent
-                                : EvoriaColors.lightTerracotta,
-                          ),
-                          const SizedBox(width: 8),
-                          Expanded(
-                            child: Text(
-                              'Privasi Terjamin: Pemrosesan teks dilakukan secara privat tanpa membagikan foto ke pihak ketiga tanpa izin.',
-                              style: TextStyle(
-                                fontSize: 11,
-                                color: isDark
-                                    ? EvoriaColors.darkAccent
-                                    : EvoriaColors.lightTerracotta,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // Suggestions Title
-                    Text(
-                      'Saran Deskripsi Alami',
-                      style: EvoriaTypography.uiBodyMedium(
-                        color: textColor,
-                        fontWeight: FontWeight.w600,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-
-                    // Suggestion Chips
+                    // Suggested Query Pills
                     Wrap(
                       spacing: 8,
                       runSpacing: 8,
@@ -174,28 +149,31 @@ class _JelajahScreenState extends State<JelajahScreen> {
                         return GestureDetector(
                           onTap: () {
                             _searchController.text = query;
-                            setState(() {
-                              _hasSearched = true;
-                            });
+                            _onSearch(query);
                           },
                           child: Container(
                             padding: const EdgeInsets.symmetric(
-                              horizontal: 14,
-                              vertical: 8,
+                              horizontal: 12,
+                              vertical: 6,
                             ),
                             decoration: BoxDecoration(
-                              color: cardColor.withOpacity(0.8),
+                              color: cardColor,
                               borderRadius: BorderRadius.circular(16),
                               border: Border.all(
-                                color: (isDark ? Colors.white : Colors.black)
-                                    .withOpacity(0.05),
+                                color: (isDark
+                                        ? EvoriaColors.glassBorderDark
+                                        : EvoriaColors.glassBorderLight)
+                                    .withOpacity(0.4),
                               ),
                             ),
                             child: Text(
                               query,
                               style: TextStyle(
-                                fontSize: 12.5,
-                                color: textColor,
+                                fontSize: 12,
+                                color: isDark
+                                    ? EvoriaColors.darkAccent
+                                    : EvoriaColors.lightTerracotta,
+                                fontWeight: FontWeight.w500,
                               ),
                             ),
                           ),
@@ -208,150 +186,161 @@ class _JelajahScreenState extends State<JelajahScreen> {
               ),
             ),
 
-            // Search Results or Empty State
-            if (_hasSearched)
-              _buildSearchResults(isDark, cardColor, textColor, mutedColor)
-            else
-              _buildInitialGuidance(isDark, cardColor, textColor, mutedColor),
-
-            const SliverToBoxAdapter(
-              child: SizedBox(height: 140), // Floating navbar spacing
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Widget _buildSearchResults(
-    bool isDark,
-    Color cardColor,
-    Color textColor,
-    Color mutedColor,
-  ) {
-    return SliverPadding(
-      padding: const EdgeInsets.symmetric(horizontal: 20),
-      sliver: SliverGrid(
-        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: 2,
-          mainAxisSpacing: 12,
-          crossAxisSpacing: 12,
-          childAspectRatio: 0.85,
-        ),
-        delegate: SliverChildBuilderDelegate(
-          (context, index) {
-            return Container(
-              decoration: BoxDecoration(
-                color: cardColor,
-                borderRadius: BorderRadius.circular(18),
-                boxShadow: isDark
-                    ? EvoriaShadows.softCardDark
-                    : EvoriaShadows.softCardLight,
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: isDark
-                            ? const Color(0xFF382F2D)
-                            : const Color(0xFFDFD1C2),
-                        borderRadius: const BorderRadius.vertical(
-                          top: Radius.circular(18),
-                        ),
-                      ),
-                      child: Center(
-                        child: Icon(
-                          Icons.image_outlined,
-                          size: 30,
-                          color: isDark ? Colors.white30 : const Color(0xFF8D7769),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.all(10),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Momen Senja di Pantai',
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: TextStyle(
-                            fontSize: 12.5,
-                            fontWeight: FontWeight.w600,
-                            color: textColor,
+            // Search Results or Guidance
+            if (_currentQuery.isNotEmpty)
+              matchingMemories.isEmpty
+                  ? SliverToBoxAdapter(
+                      child: Padding(
+                        padding: const EdgeInsets.all(40),
+                        child: Center(
+                          child: Column(
+                            children: [
+                              Icon(
+                                Icons.search_off_rounded,
+                                size: 48,
+                                color: mutedColor.withOpacity(0.4),
+                              ),
+                              const SizedBox(height: 12),
+                              Text(
+                                'Tidak menemukan kenangan dengan kata "$_currentQuery".',
+                                style: TextStyle(color: mutedColor, fontSize: 14),
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 2),
+                      ),
+                    )
+                  : SliverPadding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      sliver: SliverGrid(
+                        gridDelegate:
+                            const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 2,
+                          mainAxisSpacing: 12,
+                          crossAxisSpacing: 12,
+                          childAspectRatio: 0.82,
+                        ),
+                        delegate: SliverChildBuilderDelegate(
+                          (context, index) {
+                            final item = matchingMemories[index];
+                            final hasImage = item.imagePath != null &&
+                                File(item.imagePath!).existsSync();
+
+                            return GestureDetector(
+                              onTap: () => context.push('/detail-kenangan', extra: item),
+                              child: Container(
+                                decoration: BoxDecoration(
+                                  color: cardColor,
+                                  borderRadius: BorderRadius.circular(18),
+                                  boxShadow: isDark
+                                      ? EvoriaShadows.softCardDark
+                                      : EvoriaShadows.softCardLight,
+                                ),
+                                clipBehavior: Clip.antiAlias,
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(
+                                      child: hasImage
+                                          ? Image.file(
+                                              File(item.imagePath!),
+                                              width: double.infinity,
+                                              fit: BoxFit.cover,
+                                            )
+                                          : Container(
+                                              color: isDark
+                                                  ? const Color(0xFF382F2D)
+                                                  : const Color(0xFFDFD1C2),
+                                              child: Center(
+                                                child: Icon(
+                                                  Icons.photo_library_outlined,
+                                                  size: 30,
+                                                  color: mutedColor,
+                                                ),
+                                              ),
+                                            ),
+                                    ),
+                                    Padding(
+                                      padding: const EdgeInsets.all(10),
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
+                                        children: [
+                                          Text(
+                                            item.title,
+                                            maxLines: 1,
+                                            overflow: TextOverflow.ellipsis,
+                                            style: TextStyle(
+                                              fontSize: 13,
+                                              fontWeight: FontWeight.w600,
+                                              color: textColor,
+                                            ),
+                                          ),
+                                          const SizedBox(height: 2),
+                                          Text(
+                                            '${item.location} • ${DateFormat("d MMM", "id_ID").format(item.date)}',
+                                            style: TextStyle(
+                                              fontSize: 10.5,
+                                              color: isDark
+                                                  ? EvoriaColors.darkAccent
+                                                  : EvoriaColors.lightTerracotta,
+                                            ),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            );
+                          },
+                          childCount: matchingMemories.length,
+                        ),
+                      ),
+                    )
+            else
+              // Guidance
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(32),
+                  child: Center(
+                    child: Column(
+                      children: [
+                        Icon(
+                          Icons.travel_explore_rounded,
+                          size: 56,
+                          color: (isDark
+                                  ? EvoriaColors.darkAccent
+                                  : EvoriaColors.lightTerracotta)
+                              .withOpacity(0.5),
+                        ),
+                        const SizedBox(height: 16),
                         Text(
-                          'Relevansi 94% • 12 Okt 2026',
+                          'Cari Kenangan Manis Kalian',
+                          style: EvoriaTypography.editorialHeadline(
+                            color: textColor,
+                            fontSize: 18,
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Ketik nama tempat, kata kunci cerita, atau pilih tag suasana hati di atas untuk mencari.',
+                          textAlign: TextAlign.center,
                           style: TextStyle(
-                            fontSize: 10.5,
-                            color: isDark
-                                ? EvoriaColors.darkAccent
-                                : EvoriaColors.lightTerracotta,
+                            color: mutedColor,
+                            fontSize: 13,
+                            height: 1.4,
                           ),
                         ),
                       ],
                     ),
                   ),
-                ],
+                ),
               ),
-            );
-          },
-          childCount: 4,
-        ),
-      ),
-    );
-  }
 
-  Widget _buildInitialGuidance(
-    bool isDark,
-    Color cardColor,
-    Color textColor,
-    Color mutedColor,
-  ) {
-    return SliverToBoxAdapter(
-      child: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 20),
-        child: Container(
-          padding: const EdgeInsets.all(24),
-          decoration: BoxDecoration(
-            color: cardColor.withOpacity(0.6),
-            borderRadius: BorderRadius.circular(22),
-          ),
-          child: Column(
-            children: [
-              Icon(
-                Icons.auto_awesome_outlined,
-                size: 36,
-                color: isDark
-                    ? EvoriaColors.darkAccent
-                    : EvoriaColors.lightTerracotta,
-              ),
-              const SizedBox(height: 12),
-              Text(
-                'Mencari Memori dengan Bahasa Hati',
-                textAlign: TextAlign.center,
-                style: EvoriaTypography.editorialHeadline(
-                  color: textColor,
-                  fontSize: 18,
-                ),
-              ),
-              const SizedBox(height: 8),
-              Text(
-                'Tuliskan suasana, pakaian yang dikenakan, cuaca, atau lokasi untuk menemukan momen berdua secara instan.',
-                textAlign: TextAlign.center,
-                style: EvoriaTypography.uiBody(
-                  color: mutedColor,
-                  fontSize: 13,
-                ),
-              ),
-            ],
-          ),
+            const SliverToBoxAdapter(
+              child: SizedBox(height: 140),
+            ),
+          ],
         ),
       ),
     );

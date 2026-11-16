@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
+import '../models/memory_item.dart';
 import '../widgets/liquid_glass_nav_bar.dart';
 import '../../features/onboarding/screens/splash_screen.dart';
 import '../../features/onboarding/screens/welcome_screen.dart';
@@ -8,6 +9,8 @@ import '../../features/auth/screens/google_signin_screen.dart';
 import '../../features/auth/screens/profile_setup_screen.dart';
 import '../../features/home/screens/beranda_screen.dart';
 import '../../features/memories/screens/kenangan_screen.dart';
+import '../../features/memories/screens/tambah_kenangan_screen.dart';
+import '../../features/memories/screens/detail_kenangan_screen.dart';
 import '../../features/explore/screens/jelajah_screen.dart';
 import '../../features/reflection/screens/refleksi_screen.dart';
 import '../../features/profile/screens/profil_screen.dart';
@@ -43,6 +46,19 @@ final GoRouter appRouter = GoRouter(
     GoRoute(
       path: '/showcase',
       builder: (context, state) => const LiquidGlassShowcaseScreen(),
+    ),
+    GoRoute(
+      path: '/tambah-kenangan',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) => const TambahKenanganScreen(),
+    ),
+    GoRoute(
+      path: '/detail-kenangan',
+      parentNavigatorKey: _rootNavigatorKey,
+      builder: (context, state) {
+        final memory = state.extra as MemoryItem;
+        return DetailKenanganScreen(memory: memory);
+      },
     ),
 
     // Five Main Tabs hosted in a StatefulShellRoute with Floating Liquid Glass Navbar

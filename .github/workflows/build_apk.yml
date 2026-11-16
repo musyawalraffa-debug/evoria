@@ -42,32 +42,30 @@ jobs:
         run: flutter analyze
 
       - name: Build Android APK
-        run: flutter build apk --release
+        run: flutter build apk --release --no-tree-shake-icons
 
       - name: Prepare APK
-        run: cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/evoria-sanctuary-v1.0.0.apk
+        run: cp build/app/outputs/flutter-apk/app-release.apk build/app/outputs/flutter-apk/evoria-sanctuary-v1.0.1.apk
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
           name: evoria-release-apk
-          path: build/app/outputs/flutter-apk/evoria-sanctuary-v1.0.0.apk
+          path: build/app/outputs/flutter-apk/evoria-sanctuary-v1.0.1.apk
 
       - name: Create GitHub Release
         uses: softprops/action-gh-release@v2
         if: startsWith(github.ref, 'refs/tags/') || github.ref == 'refs/heads/main'
         with:
-          tag_name: ${{ github.ref_name || 'v1.0.0' }}
-          name: "🌸 EVORIA Sanctuary Android v1.0.0"
+          tag_name: ${{ github.ref_name || 'v1.0.1' }}
+          name: "🌸 EVORIA Sanctuary Android v1.0.1"
           body: |
-            ### ✨ EVORIA Sanctuary — Private Couple Memory Sanctuary
-            Aplikasi Android APK siap diinstal langsung ke HP Anda.
+            ### ✨ EVORIA Sanctuary — Private Couple Memory Sanctuary (v1.0.1)
+            Pembaruan rilis dengan perbaikan ikon navbar dan sistem tambah kenangan nyata dari galeri.
             
             #### 📱 Cara Install di HP Android:
-            1. Buka tautan ini di browser HP Android Anda.
-            2. Di bagian **Assets** di bawah, klik file **`evoria-sanctuary-v1.0.0.apk`**.
-            3. Setelah selesai terunduh, klik file tersebut dan pilih **Install / Pasang**.
-            4. Jika muncul peringatan *"Install unknown apps"*, izinkan (Allow) dari browser.
-            5. Buka EVORIA dan nikmati sanctuary memori Anda!
+            1. Di bagian **Assets** di bawah, klik file **`evoria-sanctuary-v1.0.1.apk`**.
+            2. Setelah selesai terunduh, klik file tersebut dan pilih **Install / Pasang**.
+            3. Aplikasi EVORIA Anda kini siap digunakan!
           files: |
-            build/app/outputs/flutter-apk/evoria-sanctuary-v1.0.0.apk
+            build/app/outputs/flutter-apk/evoria-sanctuary-v1.0.1.apk

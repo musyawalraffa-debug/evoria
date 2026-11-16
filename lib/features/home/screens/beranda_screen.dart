@@ -1,13 +1,19 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:go_router/go_router.dart';
+import 'package:intl/intl.dart';
+import '../../../core/models/memory_item.dart';
+import '../../../core/providers/sanctuary_providers.dart';
 import '../../../core/theme/evoria_colors.dart';
 import '../../../core/theme/evoria_typography.dart';
 import '../../../core/theme/evoria_shadows.dart';
 
-class BerandaScreen extends StatelessWidget {
+class BerandaScreen extends ConsumerWidget {
   const BerandaScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final Color textColor =
         isDark ? EvoriaColors.darkText : EvoriaColors.lightInk;
@@ -16,12 +22,32 @@ class BerandaScreen extends StatelessWidget {
     final Color cardColor =
         isDark ? EvoriaColors.darkSurface : EvoriaColors.lightCards;
 
+    final profile = ref.watch(profileProvider);
+    final memories = ref.watch(memoriesProvider);
+
+    final nowStr = DateFormat('d MMMM yyyy', 'id_ID').format(DateTime.now());
+
     return Scaffold(
       backgroundColor: Colors.transparent,
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 80),
+        child: FloatingActionButton.extended(
+          onPressed: () => context.push('/tambah-kenangan'),
+          backgroundColor: isDark
+              ? EvoriaColors.darkAccent
+              : EvoriaColors.lightTerracotta,
+          icon: const Icon(Icons.add_rounded, color: Colors.white),
+          label: const Text(
+            'Tambah Kenangan',
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.w600),
+          ),
+          elevation: 4,
+        ),
+      ),
       body: CustomScrollView(
         physics: const BouncingScrollPhysics(),
         slivers: [
-          // Elegant Sanctuary App Bar with Subtle Leaf & Mountain Silhouette Accent
+          // Elegant Sanctuary App Bar
           SliverAppBar(
             pinned: false,
             floating: true,
@@ -40,7 +66,7 @@ class BerandaScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          '16 November 2026',
+                          nowStr,
                           style: EvoriaTypography.uiCaption(
                             color: isDark
                                 ? EvoriaColors.darkAccent
@@ -50,10 +76,10 @@ class BerandaScreen extends StatelessWidget {
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          'Selamat Pagi, Jiwa',
+                          'Selamat Pagi, ${profile.partnerName}',
                           style: EvoriaTypography.editorialTitle(
                             color: textColor,
-                            fontSize: 26,
+                            fontSize: 24,
                           ),
                         ),
                       ],
@@ -107,65 +133,124 @@ class BerandaScreen extends StatelessWidget {
                 children: [
                   const SizedBox(height: 10),
 
-                  // "Pada Hari Ini" Highlight Card
-                  _buildOnThisDayCard(context, isDark, cardColor, textColor, mutedColor),
+                  // Couple Stats Card (Days Together)
+                  _buildCoupleStatsCard(
+                    context,
+                    profile.daysTogether,
+                    memories.length,
+                    isDark,
+                    cardColor,
+                    textColor,
+                    mutedColor,
+                  ),
                   const SizedBox(height: 24),
 
-                  // Featured Shared Moments Title
+                  // "Pada Hari Ini" Highlight Card
+                  if (memories.isNotEmpty)
+                    _buildFeaturedMemoryCard(
+                      context,
+                      memories.first,
+                      isDark,
+                      cardColor,
+                      textColor,
+                      mutedColor,
+                    ),
+                  const SizedBox(height: 24),
+
+                  // All Memories Section Title
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Kenangan Terpilih',
+                        'Linimasa Kenangan',
                         style: EvoriaTypography.editorialHeadline(
                           color: textColor,
                           fontSize: 20,
                         ),
                       ),
-                      Text(
-                        'Lihat Semua',
-                        style: EvoriaTypography.uiCaption(
-                          color: isDark
-                              ? EvoriaColors.darkAccent
-                              : EvoriaColors.lightTerracotta,
-                          fontWeight: FontWeight.w600,
+                      TextButton(
+                        onPressed: () => context.go('/kenangan'),
+                        child: Text(
+                          'Lihat Semua (${memories.length})',
+                          style: TextStyle(
+                            color: isDark
+                                ? EvoriaColors.darkAccent
+                                : EvoriaColors.lightTerracotta,
+                            fontWeight: FontWeight.w600,
+                            fontSize: 13,
+                          ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 14),
-
-                  // Horizontal Featured Stories
-                  _buildFeaturedCarousel(context, isDark, cardColor, textColor, mutedColor),
-                  const SizedBox(height: 24),
-
-                  // Recent Reflections & Letters
-                  Text(
-                    'Goresan Rasa Terbaru',
-                    style: EvoriaTypography.editorialHeadline(
-                      color: textColor,
-                      fontSize: 20,
-                    ),
-                  ),
-                  const SizedBox(height: 14),
-                  _buildReflectionSnippet(isDark, cardColor, textColor, mutedColor),
-
-                  const SizedBox(height: 24),
-                  // Sanctuary Soundtrack Mini Card
-                  _buildSoundtrackSnippet(isDark, cardColor, textColor, mutedColor),
-
-                  const SizedBox(height: 130), // Padding for floating navbar
+                  const SizedBox(height: 12),
                 ],
               ),
             ),
+          ),
+
+          // Memories List
+          if (memories.isEmpty)
+            SliverToBoxAdapter(
+              child: Padding(
+                padding: const EdgeInsets.all(40),
+                child: Center(
+                  child: Column(
+                    children: [
+                      Icon(
+                        Icons.photo_library_outlined,
+                        size: 48,
+                        color: mutedColor.withOpacity(0.5),
+                      ),
+                      const SizedBox(height: 12),
+                      Text(
+                        'Belum ada kenangan yang tersimpan.',
+                        style: TextStyle(color: mutedColor, fontSize: 14),
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        'Ketuk tombol "+ Tambah Kenangan" di bawah untuk mulai mengabadikan momen kalian.',
+                        textAlign: TextAlign.center,
+                        style: TextStyle(color: mutedColor.withOpacity(0.7), fontSize: 12),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            )
+          else
+            SliverPadding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              sliver: SliverList(
+                delegate: SliverChildBuilderDelegate(
+                  (context, index) {
+                    final item = memories[index];
+                    return _buildMemoryListItem(
+                      context,
+                      item,
+                      isDark,
+                      cardColor,
+                      textColor,
+                      mutedColor,
+                    );
+                  },
+                  childCount: memories.length,
+                ),
+              ),
+            ),
+
+          const SliverToBoxAdapter(
+            child: SizedBox(height: 120), // Bottom navbar space
           ),
         ],
       ),
     );
   }
 
-  Widget _buildOnThisDayCard(
+  Widget _buildCoupleStatsCard(
     BuildContext context,
+    int daysTogether,
+    int totalMemories,
     bool isDark,
     Color cardColor,
     Color textColor,
@@ -181,68 +266,47 @@ class BerandaScreen extends StatelessWidget {
             ? EvoriaShadows.softCardDark
             : EvoriaShadows.softCardLight,
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceAround,
         children: [
-          Row(
+          Column(
             children: [
-              Icon(
-                Icons.history_rounded,
-                size: 18,
-                color: isDark
-                    ? EvoriaColors.darkAccent
-                    : EvoriaColors.lightTerracotta,
-              ),
-              const SizedBox(width: 8),
               Text(
-                'PADA HARI INI • 2 TAHUN LALU',
-                style: EvoriaTypography.uiCaption(
+                '$daysTogether',
+                style: EvoriaTypography.editorialHeadline(
                   color: isDark
                       ? EvoriaColors.darkAccent
                       : EvoriaColors.lightTerracotta,
-                  fontWeight: FontWeight.w700,
+                  fontSize: 28,
                 ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Hari Bersama',
+                style: EvoriaTypography.uiCaption(color: mutedColor),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          Text(
-            'Senja Pertama di Bukit Pinus',
-            style: EvoriaTypography.editorialHeadline(
-              color: textColor,
-              fontSize: 20,
-            ),
+          Container(
+            width: 1,
+            height: 36,
+            color: mutedColor.withOpacity(0.2),
           ),
-          const SizedBox(height: 8),
-          Text(
-            '"Udara dingin dan dua cangkir teh hangat. Kamu bilang waktu seolah berhenti di sini."',
-            style: EvoriaTypography.uiBody(
-              color: mutedColor,
-              fontSize: 14,
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
+          Column(
             children: [
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: (isDark
-                          ? EvoriaColors.darkAccent
-                          : EvoriaColors.lightTerracotta)
-                      .withOpacity(0.12),
-                  borderRadius: BorderRadius.circular(12),
+              Text(
+                '$totalMemories',
+                style: EvoriaTypography.editorialHeadline(
+                  color: isDark
+                      ? EvoriaColors.darkAccent
+                      : EvoriaColors.lightTerracotta,
+                  fontSize: 28,
                 ),
-                child: Text(
-                  'Buka Kenangan Penuh',
-                  style: TextStyle(
-                    fontSize: 12,
-                    fontWeight: FontWeight.w600,
-                    color: isDark
-                        ? EvoriaColors.darkAccent
-                        : EvoriaColors.lightTerracotta,
-                  ),
-                ),
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Kenangan Terukir',
+                style: EvoriaTypography.uiCaption(color: mutedColor),
               ),
             ],
           ),
@@ -251,249 +315,223 @@ class BerandaScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildFeaturedCarousel(
+  Widget _buildFeaturedMemoryCard(
     BuildContext context,
+    MemoryItem item,
     bool isDark,
     Color cardColor,
     Color textColor,
     Color mutedColor,
   ) {
-    return SizedBox(
-      height: 190,
-      child: ListView(
-        scrollDirection: Axis.horizontal,
-        physics: const BouncingScrollPhysics(),
-        children: [
-          _buildMemoryCard(
-            title: 'Tepi Danau Berdua',
-            date: '12 Okt 2026',
-            photosCount: '8 Foto',
-            isDark: isDark,
-            cardColor: cardColor,
-            textColor: textColor,
-            mutedColor: mutedColor,
-          ),
-          const SizedBox(width: 14),
-          _buildMemoryCard(
-            title: 'Kopi Hujan Sore Itu',
-            date: '28 Sep 2026',
-            photosCount: '5 Foto',
-            isDark: isDark,
-            cardColor: cardColor,
-            textColor: textColor,
-            mutedColor: mutedColor,
-          ),
-          const SizedBox(width: 14),
-          _buildMemoryCard(
-            title: 'Menyusuri Kota Tua',
-            date: '14 Agu 2026',
-            photosCount: '14 Foto',
-            isDark: isDark,
-            cardColor: cardColor,
-            textColor: textColor,
-            mutedColor: mutedColor,
-          ),
-        ],
+    final hasImage = item.imagePath != null && File(item.imagePath!).existsSync();
+
+    return GestureDetector(
+      onTap: () => context.push('/detail-kenangan', extra: item),
+      child: Container(
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(26),
+          boxShadow: isDark
+              ? EvoriaShadows.softCardDark
+              : EvoriaShadows.softCardLight,
+        ),
+        clipBehavior: Clip.antiAlias,
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            if (hasImage)
+              Image.file(
+                File(item.imagePath!),
+                height: 180,
+                width: double.infinity,
+                fit: BoxFit.cover,
+              )
+            else
+              Container(
+                height: 140,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  gradient: LinearGradient(
+                    colors: isDark
+                        ? [const Color(0xFF453028), const Color(0xFF272323)]
+                        : [const Color(0xFFF3DEC8), const Color(0xFFEAD4BF)],
+                  ),
+                ),
+                child: Center(
+                  child: Icon(
+                    Icons.auto_awesome_rounded,
+                    size: 38,
+                    color: (isDark
+                            ? EvoriaColors.darkAccent
+                            : EvoriaColors.lightTerracotta)
+                        .withOpacity(0.6),
+                  ),
+                ),
+              ),
+            Padding(
+              padding: const EdgeInsets.all(18),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: (isDark
+                                  ? EvoriaColors.darkAccent
+                                  : EvoriaColors.lightTerracotta)
+                              .withOpacity(0.18),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          item.mood,
+                          style: TextStyle(
+                            color: isDark
+                                ? EvoriaColors.darkAccent
+                                : EvoriaColors.lightTerracotta,
+                            fontSize: 11,
+                            fontWeight: FontWeight.w600,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Text(
+                        DateFormat('d MMM yyyy', 'id_ID').format(item.date),
+                        style: TextStyle(color: mutedColor, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 10),
+                  Text(
+                    item.title,
+                    style: EvoriaTypography.editorialHeadline(
+                      color: textColor,
+                      fontSize: 18,
+                    ),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    item.note,
+                    maxLines: 2,
+                    overflow: TextOverflow.ellipsis,
+                    style: TextStyle(
+                      color: mutedColor,
+                      fontSize: 13,
+                      height: 1.4,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildMemoryCard({
-    required String title,
-    required String date,
-    required String photosCount,
-    required bool isDark,
-    required Color cardColor,
-    required Color textColor,
-    required Color mutedColor,
-  }) {
-    return Container(
-      width: 160,
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(20),
-        boxShadow: isDark
-            ? EvoriaShadows.softCardDark
-            : EvoriaShadows.softCardLight,
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Subtle warm placeholder with scenic framing
-          Container(
-            height: 105,
-            decoration: BoxDecoration(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
-              color: isDark
-                  ? const Color(0xFF3F3532)
-                  : const Color(0xFFDFCFC0),
-            ),
-            child: Center(
-              child: Icon(
-                Icons.image_outlined,
-                size: 28,
-                color: isDark ? Colors.white38 : const Color(0xFF8D7769),
-              ),
-            ),
+  Widget _buildMemoryListItem(
+    BuildContext context,
+    MemoryItem item,
+    bool isDark,
+    Color cardColor,
+    Color textColor,
+    Color mutedColor,
+  ) {
+    final hasImage = item.imagePath != null && File(item.imagePath!).existsSync();
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 14),
+      child: GestureDetector(
+        onTap: () => context.push('/detail-kenangan', extra: item),
+        child: Container(
+          padding: const EdgeInsets.all(14),
+          decoration: BoxDecoration(
+            color: cardColor,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: isDark
+                ? EvoriaShadows.softCardDark
+                : EvoriaShadows.softCardLight,
           ),
-          Padding(
-            padding: const EdgeInsets.all(12),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 13,
-                    fontWeight: FontWeight.w600,
-                    color: textColor,
-                  ),
+          child: Row(
+            children: [
+              ClipRRect(
+                borderRadius: BorderRadius.circular(14),
+                child: SizedBox(
+                  width: 70,
+                  height: 70,
+                  child: hasImage
+                      ? Image.file(
+                          File(item.imagePath!),
+                          fit: BoxFit.cover,
+                        )
+                      : Container(
+                          color: isDark
+                              ? const Color(0xFF382924)
+                              : const Color(0xFFF9E7D8),
+                          child: Icon(
+                            Icons.photo_library_outlined,
+                            size: 28,
+                            color: isDark
+                                ? EvoriaColors.darkAccent
+                                : EvoriaColors.lightTerracotta,
+                          ),
+                        ),
                 ),
-                const SizedBox(height: 3),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              ),
+              const SizedBox(width: 14),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      date,
+                      DateFormat('d MMMM yyyy', 'id_ID').format(item.date),
                       style: TextStyle(
-                        fontSize: 11,
-                        color: mutedColor,
-                      ),
-                    ),
-                    Text(
-                      photosCount,
-                      style: TextStyle(
-                        fontSize: 11,
-                        fontWeight: FontWeight.w500,
                         color: isDark
                             ? EvoriaColors.darkAccent
                             : EvoriaColors.lightTerracotta,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w600,
                       ),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      item.title,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: textColor,
+                        fontSize: 15,
+                        fontWeight: FontWeight.w600,
+                      ),
+                    ),
+                    const SizedBox(height: 4),
+                    Row(
+                      children: [
+                        Icon(Icons.location_on_outlined, size: 13, color: mutedColor),
+                        const SizedBox(width: 4),
+                        Expanded(
+                          child: Text(
+                            item.location,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(color: mutedColor, fontSize: 12),
+                          ),
+                        ),
+                      ],
                     ),
                   ],
                 ),
-              ],
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildReflectionSnippet(
-    bool isDark,
-    Color cardColor,
-    Color textColor,
-    Color mutedColor,
-  ) {
-    return Container(
-      padding: const EdgeInsets.all(18),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(22),
-        boxShadow: isDark
-            ? EvoriaShadows.softCardDark
-            : EvoriaShadows.softCardLight,
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 44,
-            height: 44,
-            decoration: BoxDecoration(
-              color: (isDark
-                      ? EvoriaColors.darkAccent
-                      : EvoriaColors.lightTerracotta)
-                  .withOpacity(0.14),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              Icons.auto_stories_outlined,
-              size: 22,
-              color: isDark
-                  ? EvoriaColors.darkAccent
-                  : EvoriaColors.lightTerracotta,
-            ),
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Catatan Hati Kemarin Malam',
-                  style: TextStyle(
-                    fontSize: 14,
-                    fontWeight: FontWeight.w600,
-                    color: textColor,
-                  ),
-                ),
-                const SizedBox(height: 3),
-                Text(
-                  'Terima kasih telah mendengar ceritaku...',
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                  style: TextStyle(
-                    fontSize: 12,
-                    color: mutedColor,
-                  ),
-                ),
-              ],
-            ),
-          ),
-          Icon(
-            Icons.chevron_right_rounded,
-            color: mutedColor,
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildSoundtrackSnippet(
-    bool isDark,
-    Color cardColor,
-    Color textColor,
-    Color mutedColor,
-  ) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-      decoration: BoxDecoration(
-        color: cardColor.withOpacity(0.9),
-        borderRadius: BorderRadius.circular(18),
-        border: Border.all(
-          color: (isDark ? Colors.white : Colors.black).withOpacity(0.04),
-        ),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            Icons.music_note_rounded,
-            size: 20,
-            color: isDark
-                ? EvoriaColors.darkAccent
-                : EvoriaColors.lightTerracotta,
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Text(
-              'Lagu Kenangan: Debussy — Clair de Lune',
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-              style: TextStyle(
-                fontSize: 12.5,
-                fontWeight: FontWeight.w500,
-                color: textColor,
               ),
-            ),
+              Icon(
+                Icons.arrow_forward_ios_rounded,
+                size: 14,
+                color: mutedColor.withOpacity(0.5),
+              ),
+            ],
           ),
-          Icon(
-            Icons.play_arrow_rounded,
-            color: textColor,
-          ),
-        ],
+        ),
       ),
     );
   }

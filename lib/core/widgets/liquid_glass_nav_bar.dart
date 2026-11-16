@@ -234,6 +234,23 @@ class _LiquidGlassNavBarState extends State<LiquidGlassNavBar>
     _animateToTab(widget.selectedIndex);
   }
 
+  IconData _resolveIcon(int index, IconData fallback) {
+    switch (index) {
+      case 0:
+        return Icons.home_rounded;
+      case 1:
+        return Icons.photo_library_outlined;
+      case 2:
+        return Icons.travel_explore_rounded;
+      case 3:
+        return Icons.auto_stories_outlined;
+      case 4:
+        return Icons.person_outline_rounded;
+      default:
+        return fallback;
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final bool isDark = widget.isDark;
@@ -381,7 +398,7 @@ class _LiquidGlassNavBarState extends State<LiquidGlassNavBar>
                                     Transform.scale(
                                       scale: 1.0 + (selectionFactor * 0.12),
                                       child: Icon(
-                                        item.icon,
+                                        _resolveIcon(index, item.icon),
                                         size: 22,
                                         color: iconColor,
                                       ),

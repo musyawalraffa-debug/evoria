@@ -1,14 +1,157 @@
 import 'package:flutter/material.dart';
-import 'package:go_router/go_router.dart';
+import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:intl/intl.dart';
+import '../../../core/providers/sanctuary_providers.dart';
 import '../../../core/theme/evoria_colors.dart';
 import '../../../core/theme/evoria_typography.dart';
 import '../../../core/theme/evoria_shadows.dart';
 
-class ProfilScreen extends StatelessWidget {
+class ProfilScreen extends ConsumerWidget {
   const ProfilScreen({super.key});
 
+  void _showEditProfileDialog(BuildContext context, WidgetRef ref, ProfileState profile) {
+    final userController = TextEditingController(text: profile.userName);
+    final partnerController = TextEditingController(text: profile.partnerName);
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? EvoriaColors.darkSurface
+            : EvoriaColors.lightCards,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Text('Ubah Nama Kalian'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: userController,
+              decoration: const InputDecoration(
+                labelText: 'Nama Kamu',
+                prefixIcon: Icon(Icons.person_outline),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: partnerController,
+              decoration: const InputDecoration(
+                labelText: 'Nama Pasangan',
+                prefixIcon: Icon(Icons.favorite_outline),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              if (userController.text.trim().isNotEmpty &&
+                  partnerController.text.trim().isNotEmpty) {
+                await ref.read(profileProvider.notifier).updateNames(
+                      userController.text.trim(),
+                      partnerController.text.trim(),
+                    );
+                if (context.mounted) Navigator.pop(ctx);
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: EvoriaColors.lightTerracotta,
+            ),
+            child: const Text('Simpan', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showDatePicker(BuildContext context, WidgetRef ref, ProfileState profile) async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: profile.anniversaryDate,
+      firstDate: DateTime(1990),
+      lastDate: DateTime.now(),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.light(
+              primary: EvoriaColors.lightTerracotta,
+              onPrimary: Colors.white,
+              onSurface: EvoriaColors.lightInk,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (picked != null) {
+      await ref.read(profileProvider.notifier).updateAnniversary(picked);
+    }
+  }
+
+  void _showGeminiKeyDialog(BuildContext context, WidgetRef ref, ProfileState profile) {
+    final keyController = TextEditingController(text: profile.geminiApiKey ?? '');
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: Theme.of(context).brightness == Brightness.dark
+            ? EvoriaColors.darkSurface
+            : EvoriaColors.lightCards,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+        title: const Text('Google AI Studio API Key'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Masukkan API Key Gemini 1.5 Flash dari Google AI Studio untuk mengaktifkan pencarian foto pintar & refleksi harian otomatis:',
+              style: TextStyle(fontSize: 13),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: keyController,
+              decoration: const InputDecoration(
+                hintText: 'AIzaSy...',
+                prefixIcon: Icon(Icons.key_rounded),
+                border: OutlineInputBorder(),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: const Text('Batal'),
+          ),
+          ElevatedButton(
+            onPressed: () async {
+              await ref.read(profileProvider.notifier).updateGeminiKey(keyController.text.trim());
+              if (context.mounted) {
+                Navigator.pop(ctx);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('API Key Google AI Studio berhasil disimpan! ✨'),
+                    backgroundColor: EvoriaColors.lightTerracotta,
+                  ),
+                );
+              }
+            },
+            style: ElevatedButton.styleFrom(
+              backgroundColor: EvoriaColors.lightTerracotta,
+            ),
+            child: const Text('Simpan', style: TextStyle(color: Colors.white)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
-  Widget build(BuildContext context) {
+  Widget build(BuildContext context, WidgetRef ref) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
     final Color textColor =
         isDark ? EvoriaColors.darkText : EvoriaColors.lightInk;
@@ -16,6 +159,9 @@ class ProfilScreen extends StatelessWidget {
         isDark ? EvoriaColors.darkMuted : EvoriaColors.lightMuted;
     final Color cardColor =
         isDark ? EvoriaColors.darkSurface : EvoriaColors.lightCards;
+
+    final profile = ref.watch(profileProvider);
+    final memories = ref.watch(memoriesProvider);
 
     return Scaffold(
       backgroundColor: Colors.transparent,
@@ -58,212 +204,73 @@ class ProfilScreen extends StatelessWidget {
                     child: Column(
                       children: [
                         Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            // Owner Avatar
-                            Container(
-                              width: 60,
-                              height: 60,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: (isDark
-                                        ? EvoriaColors.darkAccent
-                                        : EvoriaColors.lightTerracotta)
-                                    .withOpacity(0.2),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  'R',
-                                  style: EvoriaTypography.editorialTitle(
-                                    color: isDark
-                                        ? EvoriaColors.darkAccent
-                                        : EvoriaColors.lightTerracotta,
-                                    fontSize: 24,
-                                  ),
-                                ),
+                            _buildAvatarCircle(
+                              profile.userName.isNotEmpty ? profile.userName[0].toUpperCase() : 'U',
+                              profile.userName,
+                              textColor,
+                              mutedColor,
+                              isDark,
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              child: Icon(
+                                Icons.favorite_rounded,
+                                color: isDark
+                                    ? EvoriaColors.darkAccent
+                                    : EvoriaColors.lightTerracotta,
+                                size: 28,
                               ),
                             ),
-                            const SizedBox(width: 14),
-                            // Linked Hearts
-                            Icon(
-                              Icons.favorite_rounded,
-                              size: 20,
-                              color: isDark
-                                  ? EvoriaColors.darkAccent
-                                  : EvoriaColors.lightTerracotta,
-                            ),
-                            const SizedBox(width: 14),
-                            // Partner Avatar
-                            Container(
-                              width: 60,
-                              height: 60,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                color: (isDark
-                                        ? EvoriaColors.darkAccent
-                                        : EvoriaColors.lightPeach)
-                                    .withOpacity(0.3),
-                              ),
-                              child: Center(
-                                child: Text(
-                                  'D',
-                                  style: EvoriaTypography.editorialTitle(
-                                    color: isDark
-                                        ? EvoriaColors.darkText
-                                        : EvoriaColors.lightTerracotta,
-                                    fontSize: 24,
-                                  ),
-                                ),
-                              ),
+                            _buildAvatarCircle(
+                              profile.partnerName.isNotEmpty ? profile.partnerName[0].toUpperCase() : 'P',
+                              profile.partnerName,
+                              textColor,
+                              mutedColor,
+                              isDark,
                             ),
                           ],
                         ),
-                        const SizedBox(height: 16),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Raffa & Dinda',
-                                  style: EvoriaTypography.editorialHeadline(
-                                    color: textColor,
-                                    fontSize: 19,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  '428 Hari Bersama • Menuju Selamanya',
-                                  style: TextStyle(
-                                    fontSize: 12,
-                                    color: mutedColor,
-                                  ),
-                                ),
-                              ],
-                            ),
-                            Container(
-                              padding: const EdgeInsets.symmetric(
-                                horizontal: 10,
-                                vertical: 6,
-                              ),
-                              decoration: BoxDecoration(
-                                color: (isDark
-                                        ? EvoriaColors.darkAccent
-                                        : EvoriaColors.lightTerracotta)
-                                    .withOpacity(0.12),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: Text(
-                                'Terhubung',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  fontWeight: FontWeight.w600,
-                                  color: isDark
+                        const SizedBox(height: 18),
+                        Text(
+                          '${profile.userName} & ${profile.partnerName}',
+                          style: EvoriaTypography.editorialHeadline(
+                            color: textColor,
+                            fontSize: 22,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          'Sejak ${DateFormat("d MMMM yyyy", "id_ID").format(profile.anniversaryDate)}',
+                          style: TextStyle(color: mutedColor, fontSize: 13),
+                        ),
+                        const SizedBox(height: 14),
+                        OutlinedButton.icon(
+                          onPressed: () => _showEditProfileDialog(context, ref, profile),
+                          icon: const Icon(Icons.edit_outlined, size: 16),
+                          label: const Text('Ubah Nama Pasangan'),
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: isDark
+                                ? EvoriaColors.darkAccent
+                                : EvoriaColors.lightTerracotta,
+                            side: BorderSide(
+                              color: (isDark
                                       ? EvoriaColors.darkAccent
-                                      : EvoriaColors.lightTerracotta,
-                                ),
-                              ),
+                                      : EvoriaColors.lightTerracotta)
+                                  .withOpacity(0.5),
                             ),
-                          ],
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(16),
+                            ),
+                          ),
                         ),
                       ],
                     ),
                   ),
-                  const SizedBox(height: 20),
-
-                  // Showcase Navigation Card
-                  GestureDetector(
-                    onTap: () {
-                      context.push('/showcase');
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.all(18),
-                      decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          colors: isDark
-                              ? [
-                                  const Color(0xFF3B2F2C),
-                                  const Color(0xFF2E2422),
-                                ]
-                              : [
-                                  const Color(0xFFF3E7D9),
-                                  const Color(0xFFE8D6C4),
-                                ],
-                        ),
-                        borderRadius: BorderRadius.circular(22),
-                        border: Border.all(
-                          color: (isDark
-                                  ? EvoriaColors.darkAccent
-                                  : EvoriaColors.lightTerracotta)
-                              .withOpacity(0.3),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.all(10),
-                            decoration: BoxDecoration(
-                              color: isDark
-                                  ? EvoriaColors.darkAccent
-                                  : EvoriaColors.lightTerracotta,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(
-                              Icons.auto_awesome_rounded,
-                              size: 20,
-                              color: Colors.white,
-                            ),
-                          ),
-                          const SizedBox(width: 14),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  'Showcase Liquid Glass Navbar',
-                                  style: TextStyle(
-                                    fontSize: 14.5,
-                                    fontWeight: FontWeight.w700,
-                                    color: textColor,
-                                  ),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  'Uji interaksi hold, drag elastis, chromatic aberration & snap',
-                                  style: TextStyle(
-                                    fontSize: 11.5,
-                                    color: mutedColor,
-                                  ),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Icon(
-                            Icons.arrow_forward_ios_rounded,
-                            size: 16,
-                            color: isDark
-                                ? EvoriaColors.darkAccent
-                                : EvoriaColors.lightTerracotta,
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Sanctuary Stats Grid
-                  Row(
-                    children: [
-                      _buildStatBox('84', 'Kenangan', cardColor, textColor, mutedColor, isDark),
-                      const SizedBox(width: 10),
-                      _buildStatBox('14', 'Album', cardColor, textColor, mutedColor, isDark),
-                      const SizedBox(width: 10),
-                      _buildStatBox('26', 'Refleksi', cardColor, textColor, mutedColor, isDark),
-                    ],
-                  ),
                   const SizedBox(height: 24),
 
-                  // Settings Sections
+                  // Sanctuary Settings List
                   Text(
                     'Pengaturan Suaka',
                     style: EvoriaTypography.editorialHeadline(
@@ -273,50 +280,98 @@ class ProfilScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 12),
 
-                  _buildSettingsTile(
-                    icon: Icons.fingerprint_rounded,
-                    title: 'Kunci Aplikasi & Privasi',
-                    subtitle: 'Sidik Jari, Face Unlock, PIN 6-Digit',
+                  // Tanggal Spesial / Anniversary
+                  _buildSettingTile(
+                    icon: Icons.calendar_today_rounded,
+                    title: 'Tanggal Bersejarah Bersama',
+                    subtitle: DateFormat('d MMMM yyyy', 'id_ID').format(profile.anniversaryDate),
                     cardColor: cardColor,
                     textColor: textColor,
                     mutedColor: mutedColor,
-                    isDark: isDark,
+                    onTap: () => _showDatePicker(context, ref, profile),
                   ),
                   const SizedBox(height: 10),
 
-                  _buildSettingsTile(
-                    icon: Icons.cloud_done_outlined,
-                    title: 'Penyimpanan & Cadangan',
-                    subtitle: 'Google One / Drive Pribadi (Sinkronisasi Aman)',
+                  // Google AI Studio Key
+                  _buildSettingTile(
+                    icon: Icons.auto_awesome_rounded,
+                    title: 'Google AI Studio (Gemini)',
+                    subtitle: profile.geminiApiKey != null && profile.geminiApiKey!.isNotEmpty
+                        ? 'Kunci AI Terhubung'
+                        : 'Belum diatur (Ketuk untuk memasukkan)',
                     cardColor: cardColor,
                     textColor: textColor,
                     mutedColor: mutedColor,
-                    isDark: isDark,
+                    onTap: () => _showGeminiKeyDialog(context, ref, profile),
                   ),
                   const SizedBox(height: 10),
 
-                  _buildSettingsTile(
-                    icon: Icons.notifications_none_rounded,
-                    title: 'Notifikasi & Pengingat',
-                    subtitle: 'Undangan pasangan, EVORIA Share, Kapsul Waktu',
+                  // Statistik Suaka
+                  _buildSettingTile(
+                    icon: Icons.data_usage_rounded,
+                    title: 'Total Kenangan Tersimpan',
+                    subtitle: '${memories.length} Momen Abadi (Tersimpan Lokal di HP)',
                     cardColor: cardColor,
                     textColor: textColor,
                     mutedColor: mutedColor,
-                    isDark: isDark,
+                    onTap: () {},
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 24),
 
-                  _buildSettingsTile(
-                    icon: Icons.info_outline_rounded,
-                    title: 'Tentang EVORIA',
-                    subtitle: 'Versi 1.0.0 • Suaka cinta dua insan',
-                    cardColor: cardColor,
-                    textColor: textColor,
-                    mutedColor: mutedColor,
-                    isDark: isDark,
+                  // Keamanan & Privasi
+                  Text(
+                    'Privasi & Kedaulatan Data',
+                    style: EvoriaTypography.editorialHeadline(
+                      color: textColor,
+                      fontSize: 18,
+                    ),
                   ),
-
-                  const SizedBox(height: 140), // Floating navbar spacing
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.all(18),
+                    decoration: BoxDecoration(
+                      color: cardColor,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Icon(
+                          Icons.shield_outlined,
+                          color: isDark
+                              ? EvoriaColors.darkAccent
+                              : EvoriaColors.lightTerracotta,
+                          size: 24,
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Data Sepenuhnya Milik Kalian',
+                                style: TextStyle(
+                                  color: textColor,
+                                  fontWeight: FontWeight.w600,
+                                  fontSize: 14,
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              Text(
+                                'Semua foto dan catatan kenangan disimpan langsung di memori perangkat HP Anda secara lokal. Tidak ada server pihak ketiga yang mengintip memori cinta kalian.',
+                                style: TextStyle(
+                                  color: mutedColor,
+                                  fontSize: 12,
+                                  height: 1.4,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 120),
                 ],
               ),
             ),
@@ -326,106 +381,101 @@ class ProfilScreen extends StatelessWidget {
     );
   }
 
-  static Widget _buildStatBox(
-    String value,
-    String label,
-    Color cardColor,
+  Widget _buildAvatarCircle(
+    String letter,
+    String name,
     Color textColor,
     Color mutedColor,
     bool isDark,
   ) {
-    return Expanded(
-      child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          color: cardColor,
-          borderRadius: BorderRadius.circular(18),
-          boxShadow: isDark
-              ? EvoriaShadows.softCardDark
-              : EvoriaShadows.softCardLight,
-        ),
-        child: Column(
-          children: [
-            Text(
-              value,
-              style: EvoriaTypography.editorialHeadline(
+    return Column(
+      children: [
+        Container(
+          width: 64,
+          height: 64,
+          decoration: BoxDecoration(
+            color: (isDark
+                    ? EvoriaColors.darkAccent
+                    : EvoriaColors.lightTerracotta)
+                .withOpacity(0.18),
+            shape: BoxShape.circle,
+            border: Border.all(
+              color: isDark
+                  ? EvoriaColors.darkAccent
+                  : EvoriaColors.lightTerracotta,
+              width: 1.5,
+            ),
+          ),
+          child: Center(
+            child: Text(
+              letter,
+              style: TextStyle(
                 color: isDark
                     ? EvoriaColors.darkAccent
                     : EvoriaColors.lightTerracotta,
-                fontSize: 22,
+                fontSize: 24,
+                fontWeight: FontWeight.w600,
               ),
             ),
-            const SizedBox(height: 4),
-            Text(
-              label,
-              style: TextStyle(
-                fontSize: 11.5,
-                color: mutedColor,
-              ),
-            ),
-          ],
+          ),
         ),
-      ),
+        const SizedBox(height: 6),
+        Text(
+          name,
+          style: TextStyle(
+            color: textColor,
+            fontSize: 13,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
     );
   }
 
-  static Widget _buildSettingsTile({
+  Widget _buildSettingTile({
     required IconData icon,
     required String title,
     required String subtitle,
     required Color cardColor,
     required Color textColor,
     required Color mutedColor,
-    required bool isDark,
+    required VoidCallback onTap,
   }) {
-    return Container(
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: cardColor,
-        borderRadius: BorderRadius.circular(18),
-        boxShadow: isDark
-            ? EvoriaShadows.softCardDark
-            : EvoriaShadows.softCardLight,
-      ),
-      child: Row(
-        children: [
-          Icon(
-            icon,
-            size: 22,
-            color: isDark
-                ? EvoriaColors.darkAccent
-                : EvoriaColors.lightTerracotta,
-          ),
-          const SizedBox(width: 14),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  title,
-                  style: TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w600,
-                    color: textColor,
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        decoration: BoxDecoration(
+          color: cardColor,
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, size: 22, color: textColor),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    title,
+                    style: TextStyle(
+                      color: textColor,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
-                ),
-                const SizedBox(height: 2),
-                Text(
-                  subtitle,
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    color: mutedColor,
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitle,
+                    style: TextStyle(color: mutedColor, fontSize: 12),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-          Icon(
-            Icons.chevron_right_rounded,
-            size: 20,
-            color: mutedColor,
-          ),
-        ],
+            Icon(Icons.arrow_forward_ios_rounded, size: 14, color: mutedColor.withOpacity(0.5)),
+          ],
+        ),
       ),
     );
   }
