@@ -23,7 +23,7 @@ class _GoogleSignInScreenState extends State<GoogleSignInScreen> {
 
     try {
       // In production, invokes GoogleSignIn().signIn() and authenticates session
-      await Future.delayed(const Duration(milliseconds: 1200));
+      await Future<void>.delayed(const Duration(milliseconds: 1200));
 
       if (mounted) {
         context.go('/profile-setup');

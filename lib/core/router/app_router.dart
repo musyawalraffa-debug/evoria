@@ -111,7 +111,7 @@ class _MainShellNavBar extends StatelessWidget {
   Widget build(BuildContext context) {
     final bool isDark = Theme.of(context).brightness == Brightness.dark;
 
-    final List<LiquidNavItem> navItems = const [
+    const navItems = [
       LiquidNavItem(icon: Icons.home_rounded, label: 'Beranda'),
       LiquidNavItem(icon: Icons.photo_library_outlined, label: 'Kenangan'),
       LiquidNavItem(icon: Icons.travel_explore_rounded, label: 'Jelajah'),

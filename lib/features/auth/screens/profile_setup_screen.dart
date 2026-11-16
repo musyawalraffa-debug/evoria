@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/theme/evoria_colors.dart';
 import '../../../core/theme/evoria_typography.dart';
-import '../../../core/theme/evoria_shadows.dart';
 
 class ProfileSetupScreen extends StatefulWidget {
   const ProfileSetupScreen({super.key});

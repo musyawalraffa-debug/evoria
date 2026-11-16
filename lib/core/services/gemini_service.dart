@@ -9,7 +9,7 @@ class GeminiService {
   static const String _baseUrl =
       'https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent';
 
-  GeminiService({required this.apiKey});
+  const GeminiService({required this.apiKey});
 
   /// Mencari indeks kenangan yang paling relevan dengan deskripsi bahasa alami pengguna
   /// Contoh query: "foto kita waktu sunset di pantai"
@@ -19,7 +19,7 @@ class GeminiService {
   }) async {
     if (apiKey.isEmpty || memoryStories.isEmpty) return [];
 
-    final systemInstruction = '''
+    const systemInstruction = '''
 Anda adalah mesin pencari semantik cerdas untuk aplikasi kenangan pasangan bernama EVORIA.
 Diberikan query pencarian bahasa alami dan daftar deskripsi foto kenangan.
 Tugas Anda adalah mengurutkan indeks kenangan (0-indexed) yang paling cocok dengan query.
@@ -54,9 +54,17 @@ ${memoryStories.asMap().entries.map((e) => '[${e.key}] ${e.value}').join('\n')}
       );
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final rawText = data['candidates'][0]['content']['parts'][0]['text'];
-        final List<dynamic> indices = jsonDecode(rawText);
+        final Map<String, dynamic> data =
+            jsonDecode(response.body) as Map<String, dynamic>;
+        final List<dynamic> candidates = data['candidates'] as List<dynamic>;
+        final Map<String, dynamic> firstCandidate =
+            candidates[0] as Map<String, dynamic>;
+        final Map<String, dynamic> content =
+            firstCandidate['content'] as Map<String, dynamic>;
+        final List<dynamic> parts = content['parts'] as List<dynamic>;
+        final String rawText =
+            (parts[0] as Map<String, dynamic>)['text'] as String;
+        final List<dynamic> indices = jsonDecode(rawText) as List<dynamic>;
         return indices.map((e) => (e as num).toInt()).toList();
       }
     } catch (_) {
@@ -94,8 +102,16 @@ ${memoryStories.asMap().entries.map((e) => '[${e.key}] ${e.value}').join('\n')}
       );
 
       if (response.statusCode == 200) {
-        final data = jsonDecode(response.body);
-        final rawText = data['candidates'][0]['content']['parts'][0]['text'];
+        final Map<String, dynamic> data =
+            jsonDecode(response.body) as Map<String, dynamic>;
+        final List<dynamic> candidates = data['candidates'] as List<dynamic>;
+        final Map<String, dynamic> firstCandidate =
+            candidates[0] as Map<String, dynamic>;
+        final Map<String, dynamic> content =
+            firstCandidate['content'] as Map<String, dynamic>;
+        final List<dynamic> parts = content['parts'] as List<dynamic>;
+        final String rawText =
+            (parts[0] as Map<String, dynamic>)['text'] as String;
         return rawText.trim();
       }
     } catch (_) {}

@@ -10,6 +10,7 @@ class EvoriaTypography {
     FontWeight fontWeight = FontWeight.w600,
     double letterSpacing = -0.5,
     FontStyle fontStyle = FontStyle.normal,
+    double? height,
   }) {
     return GoogleFonts.playfairDisplay(
       color: color,
@@ -17,6 +18,7 @@ class EvoriaTypography {
       fontWeight: fontWeight,
       letterSpacing: letterSpacing,
       fontStyle: fontStyle,
+      height: height,
     );
   }
 
@@ -24,12 +26,15 @@ class EvoriaTypography {
     required Color color,
     double fontSize = 22,
     FontWeight fontWeight = FontWeight.w600,
+    double letterSpacing = -0.3,
+    double? height,
   }) {
     return GoogleFonts.playfairDisplay(
       color: color,
       fontSize: fontSize,
       fontWeight: fontWeight,
-      letterSpacing: -0.3,
+      letterSpacing: letterSpacing,
+      height: height,
     );
   }
 
@@ -63,6 +68,7 @@ class EvoriaTypography {
     required Color color,
     double fontSize = 12,
     FontWeight fontWeight = FontWeight.w400,
+    FontWeight? fontWeightOverride,
   }) {
     return GoogleFonts.inter(
       color: color,

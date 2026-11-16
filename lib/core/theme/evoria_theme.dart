@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'evoria_colors.dart';
-import 'evoria_typography.dart';
 
 @immutable
 class EvoriaThemeExtension extends ThemeExtension<EvoriaThemeExtension> {

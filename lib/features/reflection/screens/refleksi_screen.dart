@@ -78,42 +78,44 @@ class _RefleksiScreenState extends State<RefleksiScreen> {
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
-                children: List.generate(_categories.length, (index) {
-                  final bool isSelected = _selectedCategory == index;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _selectedCategory = index;
-                        });
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? (isDark
-                                  ? EvoriaColors.darkAccent
-                                  : EvoriaColors.lightTerracotta)
-                              : cardColor,
-                          borderRadius: BorderRadius.circular(16),
-                        ),
-                        child: Text(
-                          _categories[index],
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight:
-                                isSelected ? FontWeight.w600 : FontWeight.w400,
-                            color: isSelected ? Colors.white : textColor,
+                child: Row(
+                  children: List.generate(_categories.length, (index) {
+                    final bool isSelected = _selectedCategory == index;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _selectedCategory = index;
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? (isDark
+                                    ? EvoriaColors.darkAccent
+                                    : EvoriaColors.lightTerracotta)
+                                : cardColor,
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: Text(
+                            _categories[index],
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight:
+                                  isSelected ? FontWeight.w600 : FontWeight.w400,
+                              color: isSelected ? Colors.white : textColor,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  );
-                }),
+                    );
+                  }),
+                ),
               ),
             ),
           ),

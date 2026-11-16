@@ -76,54 +76,56 @@ class _KenanganScreenState extends State<KenanganScreen> {
               child: SingleChildScrollView(
                 scrollDirection: Axis.horizontal,
                 physics: const BouncingScrollPhysics(),
-                children: List.generate(_filters.length, (index) {
-                  final bool isSelected = _activeFilter == index;
-                  return Padding(
-                    padding: const EdgeInsets.only(right: 8),
-                    child: GestureDetector(
-                      onTap: () {
-                        setState(() {
-                          _activeFilter = index;
-                        });
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(
-                          horizontal: 16,
-                          vertical: 8,
-                        ),
-                        decoration: BoxDecoration(
-                          color: isSelected
-                              ? (isDark
-                                  ? EvoriaColors.darkAccent
-                                  : EvoriaColors.lightTerracotta)
-                              : cardColor,
-                          borderRadius: BorderRadius.circular(16),
-                          boxShadow: isSelected
-                              ? [
-                                  BoxShadow(
-                                    color: (isDark
-                                            ? EvoriaColors.darkAccent
-                                            : EvoriaColors.lightTerracotta)
-                                        .withOpacity(0.3),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 3),
-                                  )
-                                ]
-                              : null,
-                        ),
-                        child: Text(
-                          _filters[index],
-                          style: TextStyle(
-                            fontSize: 13,
-                            fontWeight:
-                                isSelected ? FontWeight.w600 : FontWeight.w400,
-                            color: isSelected ? Colors.white : textColor,
+                child: Row(
+                  children: List.generate(_filters.length, (index) {
+                    final bool isSelected = _activeFilter == index;
+                    return Padding(
+                      padding: const EdgeInsets.only(right: 8),
+                      child: GestureDetector(
+                        onTap: () {
+                          setState(() {
+                            _activeFilter = index;
+                          });
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 16,
+                            vertical: 8,
+                          ),
+                          decoration: BoxDecoration(
+                            color: isSelected
+                                ? (isDark
+                                    ? EvoriaColors.darkAccent
+                                    : EvoriaColors.lightTerracotta)
+                                : cardColor,
+                            borderRadius: BorderRadius.circular(16),
+                            boxShadow: isSelected
+                                ? [
+                                    BoxShadow(
+                                      color: (isDark
+                                              ? EvoriaColors.darkAccent
+                                              : EvoriaColors.lightTerracotta)
+                                          .withOpacity(0.3),
+                                      blurRadius: 8,
+                                      offset: const Offset(0, 3),
+                                    )
+                                  ]
+                                : null,
+                          ),
+                          child: Text(
+                            _filters[index],
+                            style: TextStyle(
+                              fontSize: 13,
+                              fontWeight:
+                                  isSelected ? FontWeight.w600 : FontWeight.w400,
+                              color: isSelected ? Colors.white : textColor,
+                            ),
                           ),
                         ),
                       ),
-                    ),
-                  );
-                }),
+                    );
+                  }),
+                ),
               ),
             ),
           ),

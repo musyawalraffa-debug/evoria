@@ -315,7 +315,7 @@ class _LiquidGlassNavBarState extends State<LiquidGlassNavBar>
 
                           // Capsule dimensions
                           final double baseWidth = itemWidth * 0.82;
-                          final double baseHeight = 48.0;
+                          const double baseHeight = 48.0;
                           final double currentWidth =
                               baseWidth * capsuleScale * widthStretch;
                           final double currentHeight =
